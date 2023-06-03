@@ -22,7 +22,7 @@
 						<svelte:fragment slot="icon">
 							<Home class="mr-2" />
 						</svelte:fragment>
-						My School
+						Home
 					</BreadcrumbItem>
 					<BreadcrumbItem href="/">
 						<svelte:fragment slot="icon">
