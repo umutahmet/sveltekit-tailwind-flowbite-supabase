@@ -1,46 +1,12 @@
-<script>
-	import { Button } from 'flowbite-svelte';
-	import { onMount } from 'svelte';
+<script lang="ts">
+	import Auth from '$lib/components/auth/Auth.svelte';
 
-	import collection from '$lib/database/collection';
-	import { goto } from '$app/navigation';
-
-	/**
-	 * @type {string | any[]}
-	 */
-	let collectionDisplay = [];
-
-	onMount(async () => {
-		// @ts-ignore
-		collection = await collection.all();
-	});
-
-	async function add() {
-		const res = await collection.create({
-			title: 'Untitled',
-			position: collectionDisplay.length
-		});
-		goto(`/collection/${res?.id}`);
-	}
+	export let data;
 </script>
 
-<svelte:head>
-	<title>Dashboard</title>
-</svelte:head>
-
-<div class="max-w-7xl mx-auto">
-	<h1 class="text-2xl">Welcome to your dashboard</h1>
-	<ul>
-		{#each collectionDisplay as collection}
-			<li>
-				<a href="/collections/{collection.id}">{collection.title}</a>
-			</li>
-		{/each}
-
-		<li class="add">
-			<Button on:click={add}>
-				{collectionDisplay.length == 0 ? 'Add a collection' : 'Add another collection'}
-			</Button>
-		</li>
-	</ul>
+<div class="flex items-center justify-center w-full h-full">
+	<div class="w-full max-w-[460px] p-8 rounded bg-white">
+		<h1 class="text-xl md:text-3xl font-bold mb-8 text-center">Welcome back!</h1>
+		<Auth supabaseClient={data.supabase} redirect={`${data.url}/auth/callback`} />
+	</div>
 </div>

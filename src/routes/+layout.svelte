@@ -1,43 +1,48 @@
 <script>
 	import '$lib/app.css';
-	import { Breadcrumb, BreadcrumbItem } from 'flowbite-svelte';
-	import Nav from '$lib/components/Nav.svelte';
-	import { Home } from '$lib/icons';
-	import auth from '$lib/database/auth';
-	import Login from '$lib/components/Login.svelte';
+	import { onMount } from 'svelte';
+	import { goto, invalidate } from '$app/navigation';
 
-	export const ssr = false;
+	import { user } from '$lib/store/user.js';
+	import Private from '$lib/components/layouts/Private.svelte';
+	import Public from '$lib/components/layouts/Public.svelte';
 
-	let user = auth.user;
+	export let data;
+
+	let { supabase, session } = data;
+	$: ({ supabase, session } = data);
+
+	onMount(() => {
+		const { data } = supabase.auth.onAuthStateChange((event, _session) => {
+			console.log('onAuthStateChange', { event, _session });
+			if (
+				_session?.expires_at !== session?.expires_at ||
+				(event === 'INITIAL_SESSION' && _session === null)
+			) {
+				invalidate('supabase:auth');
+				user.reset();
+			} else if (event == 'SIGNED_OUT') {
+				user.reset();
+			} else {
+				if (_session?.user) {
+					user.update(() => _session.user);
+				}
+				if (event == 'SIGNED_IN' && _session) {
+					goto('/dashboard');
+				}
+			}
+		});
+
+		return () => data.subscription.unsubscribe();
+	});
 </script>
 
-{#if $user}
-	<div class="flex w-full h-full">
-		<Nav />
-
-		<main class="flex-grow">
-			<header class="border-b border-gray-200">
-				<Breadcrumb class="bg-gray-50 py-3 px-5 dark:bg-gray-900">
-					<BreadcrumbItem href="/" home>
-						<svelte:fragment slot="icon">
-							<Home class="mr-2" />
-						</svelte:fragment>
-						Home
-					</BreadcrumbItem>
-					<BreadcrumbItem href="/">
-						<svelte:fragment slot="icon">
-							<span class="text-gray-400">/</span>
-						</svelte:fragment>
-						Dashboard
-					</BreadcrumbItem>
-				</Breadcrumb>
-			</header>
-
-			<div class="w-full h-full p-2">
-				<slot />
-			</div>
-		</main>
-	</div>
+{#if session?.user}
+	<Private>
+		<slot />
+	</Private>
 {:else}
-	<Login />
+	<Public>
+		<slot />
+	</Public>
 {/if}
